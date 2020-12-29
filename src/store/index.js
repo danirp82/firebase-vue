@@ -29,6 +29,9 @@ const store = new Vuex.Store({
           commit("user/setUser", null);
           commit("rooms/setRooms", []);
           commit("rooms/setRoomsListener", null);
+
+          commit("messages/setMessages", []);
+          commit("messages/setMessagesListener", null);
         }
       });
     }
