@@ -4,12 +4,12 @@ import "firebase/firestore";
 import "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDtCNAMYQhK8iRLLXJlmtSPKZtQxT1KGc0",
-  authDomain: "vue-talkin.firebaseapp.com",
-  projectId: "vue-talkin",
-  storageBucket: "vue-talkin.appspot.com",
-  messagingSenderId: "531573959970",
-  appId: "1:531573959970:web:4e72c840dfc3396607897b"
+  apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
+  authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VUE_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VUE_APP_FIREBASE_APP_ID
 };
 
 firebase.initializeApp(firebaseConfig);
