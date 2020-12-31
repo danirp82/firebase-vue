@@ -32,7 +32,6 @@ const actions = {
 
     function doSnapShot(querySnapshot) {
       const messages = [];
-      console.log("store messages ", querySnapshot);
       querySnapshot.forEach(doc => {
         let message = doc.data();
         message.id = doc.id;
