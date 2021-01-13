@@ -8,15 +8,17 @@
       <!-- Room element -->
       <div v-for="room in rooms" :key="room.id" class="column is-one-third">
         <router-link :to="{ name: 'view', params: { id: room.id } }">
-          <div class="card">
-            <div class="card-image">
-              <figure class="image is-16by9">
-                <img
-                  src="https://bulma.io/images/placeholders/1280x960.png"
-                  alt="Placeholder image"
-                />
-              </figure>
+          <div
+            class="card room"
+            :class="{ unread: hasUnreadMessages(room.id).length }"
+          >
+            <div v-if="hasUnreadMessages(room.id).length" class="unread-alert">
+              {{ hasUnreadMessages(room.id).length }} unread messages 🔥
             </div>
+            <div
+              class="card-image room__image"
+              :style="{ 'background-image': `url(${getRoomImage(room.id)}` }"
+            ></div>
             <div class="card-content">
               <div class="media">
                 <div class="media-content">
@@ -52,7 +54,53 @@ export default {
     rooms: {
       type: Array,
       required: true
+    },
+    unreadMessages: {
+      type: Array
+    }
+  },
+  methods: {
+    getRoomImage(roomId) {
+      const room = this.rooms.find(room => room.id === roomId);
+      return room.image ? room.image : require("@/assets/img/room-image.jpg");
+    },
+    hasUnreadMessages(roomId) {
+      return this.unreadMessages.filter(message => {
+        return message.roomId === roomId;
+      });
     }
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.room {
+  position: relative;
+  &.unread {
+    border: 3px solid orange;
+    animation: slidein 0.6s infinite alternate ease-in-out;
+  }
+  .unread-alert {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: orange;
+    padding: 1rem;
+    z-index: 2;
+  }
+
+  .room__image {
+    height: 15vmax;
+    background-size: cover;
+    background-position: center;
+  }
+}
+@keyframes slidein {
+  from {
+    transform: translateY(-1rem);
+  }
+  to {
+    transform: translateY(1rem);
+  }
+}
+</style>

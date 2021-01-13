@@ -1,7 +1,18 @@
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 const state = {
   rooms: [],
   roomsListener: () => {}
+};
+
+const getters = {
+  getRoom: state => id => {
+    return state.rooms.find(room => room.id === id);
+  },
+  roomsByDate: state => {
+    return state.rooms.sort(function(a, b) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+  }
 };
 
 const mutations = {
@@ -17,7 +28,7 @@ const mutations = {
   },
   createRoom(state, { roomData, id }) {
     roomData.id = id;
-    state.rooms.unshift(roomData);
+    state.rooms.push(roomData);
   },
   updateRoom(state, { index, roomData, id }) {
     roomData.id = id;
@@ -28,21 +39,40 @@ const mutations = {
   }
 };
 
-const getters = {
-  getRoom: state => id => {
-    return state.rooms.find(room => room.id === id);
-  }
-};
-
 const actions = {
-  async createRoom({ rootState }, { name, description }) {
-    await db.collection("rooms").add({
-      name,
-      description,
-      createAt: Date.now(),
-      adminUid: rootState.user.user.uid,
-      adminName: rootState.user.user.displayName
-    });
+  getNewRoomId() {
+    return db.collection("rooms").doc();
+  },
+
+  async uploadRoomImage(context, { roomID, file }) {
+    const uploadPhoto = () => {
+      let fileName = `rooms/${roomID}/${roomID}-image.jpg`;
+      return storage.ref(fileName).put(file);
+    };
+
+    function getDownloadURL(ref) {
+      return ref.getDownloadURL();
+    }
+
+    try {
+      let upload = await uploadPhoto();
+      return await getDownloadURL(upload.ref);
+    } catch (error) {
+      throw Error(error.message);
+    }
+  },
+  async createRoom({ rootState }, { name, description, image, roomID }) {
+    await db
+      .collection("rooms")
+      .doc(roomID)
+      .set({
+        name,
+        description,
+        createAt: Date.now(),
+        adminUid: rootState.user.user.uid,
+        adminName: rootState.user.user.displayName,
+        image
+      });
   },
   async getRooms({ commit }) {
     const query = db
@@ -91,12 +121,14 @@ const actions = {
 
     return room;
   },
-  async updateRoom(context, { roomID, name, description }) {
+  async updateRoom(context, { roomID, name, description, image }) {
     const roomData = {};
 
     if (name) roomData.name = name;
 
     if (description) roomData.description = description;
+
+    roomData.image = image;
 
     await db
       .collection("rooms")
@@ -107,9 +139,7 @@ const actions = {
     const room = db.collection("rooms").doc(roomID);
     const messages = room.collection("messages").onSnapshot(doSnapshot);
 
-    await room.delete();
-
-    function doSnapshot(snapshot) {
+    async function doSnapshot(snapshot) {
       snapshot.docs.forEach(async doc => {
         await room
           .collection("messages")
@@ -117,6 +147,8 @@ const actions = {
           .delete();
       });
       messages(); // Unsub
+
+      await room.delete();
     }
   }
 };

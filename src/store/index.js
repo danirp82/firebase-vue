@@ -21,17 +21,28 @@ const store = new Vuex.Store({
   },
   actions: {
     checkAuth({ commit, dispatch }) {
-      auth.onAuthStateChanged(user => {
+      auth.onAuthStateChanged(async function(user) {
         if (user) {
           commit("user/setUser", user);
-          dispatch("rooms/getRooms");
+          try {
+            await dispatch("user/getMeta");
+            await dispatch("rooms/getRooms");
+            await dispatch("messages/getMessages");
+          } catch (error) {
+            console.error(error);
+            this.$toast.error(error);
+          }
         } else {
-          commit("user/setUser", null);
+          commit("user/setMeta", {});
+          commit("user/setUserListener", () => {});
+
           commit("rooms/setRooms", []);
           commit("rooms/setRoomsListener", null);
 
           commit("messages/setMessages", []);
           commit("messages/setMessagesListener", null);
+
+          commit("user/setUser", null);
         }
       });
     }

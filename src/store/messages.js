@@ -1,7 +1,28 @@
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 const state = {
   messages: [],
-  messagesListener: () => {}
+  messagesListener: () => {},
+  filters: [
+    { name: "normal" },
+    { name: "clarendon" },
+    { name: "gingham" },
+    { name: "moon" },
+    { name: "lark" },
+    { name: "reyes" },
+    { name: "juno" },
+    { name: "slumber" },
+    { name: "aden" },
+    { name: "perpetua" },
+    { name: "mayfair" },
+    { name: "rise" },
+    { name: "hudson" },
+    { name: "valencia" },
+    { name: "xpro2" },
+    { name: "willow" },
+    { name: "lofi" },
+    { name: "inkwell" },
+    { name: "nashville" }
+  ]
 };
 
 const getters = {};
@@ -20,11 +41,9 @@ const mutations = {
 };
 
 const actions = {
-  async getMessages({ commit }, roomID) {
+  async getMessages({ commit }) {
     const query = db
-      .collection("rooms")
-      .doc(roomID)
-      .collection("messages")
+      .collectionGroup("messages")
       .orderBy("createdAt", "desc")
       .onSnapshot(doSnapShot);
 
@@ -40,7 +59,31 @@ const actions = {
       commit("setMessages", messages);
     }
   },
-  async createMessage({ rootState }, { roomID, message }) {
+  async uploadMessageFile({ rootGetters }, { roomID, file, type }) {
+    const timestamp = Date.now();
+    const userUID = rootGetters["user/getUserUid"];
+
+    const ext = type === "photo" ? "jpg" : "wav";
+    const uploadPhoto = () => {
+      let fileName = `rooms/${roomID}/messages/${userUID}-${timestamp}.${ext}`;
+      return storage.ref(fileName).put(file);
+    };
+
+    function getDownloadURL(ref) {
+      return ref.getDownloadURL();
+    }
+
+    try {
+      let upload = await uploadPhoto();
+      return await getDownloadURL(upload.ref);
+    } catch (error) {
+      throw Error(error.message);
+    }
+  },
+  async createMessage(
+    { rootState },
+    { roomID, message, photo, filter, audio }
+  ) {
     await db
       .collection("rooms")
       .doc(roomID)
@@ -48,7 +91,11 @@ const actions = {
       .add({
         userId: rootState.user.user.uid,
         userName: rootState.user.user.displayName,
+        roomId: roomID,
         message,
+        photo,
+        filter,
+        audio,
         createdAt: Date.now()
       });
   }
